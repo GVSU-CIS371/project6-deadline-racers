@@ -7,7 +7,26 @@ const routes = [
     props: true,
     component: HomeView,
   },
-  // you need to add more routes here
+  {
+    path: '/clothing',
+    name: 'Clothing',
+    component: () => import('./components/Clothing.vue')
+  },
+  {
+    path: '/electronics',
+    name: 'Electronics',
+    component: () => import('./components/Electronics.vue')
+  },
+  {
+    path: '/groceries',
+    name: 'Groceries',
+    component: () => import('./components/Groceries.vue')
+  },
+  {
+    path: '/bestseller',
+    name: 'BestSeller',
+    component: () => import('./components/BestSeller.vue')
+  },
 ];
 
 const router = createRouter({
