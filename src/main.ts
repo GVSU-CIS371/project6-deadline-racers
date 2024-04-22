@@ -14,35 +14,21 @@ import router from "./router";
 // Import the functions you need from the SDKs you need
 
 import { initializeApp } from "firebase/app";
-
-// TODO: Add SDKs for Firebase products that you want to use
-
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-
-// Your web app's Firebase configuration
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-
-  apiKey: "AIzaSyCNp8uA-E5ClFGbiS41jeG6KjfaDu9GbUU",
-
-  authDomain: "project-6-9ca49.firebaseapp.com",
-
-  projectId: "project-6-9ca49",
-
-  storageBucket: "project-6-9ca49.appspot.com",
-
-  messagingSenderId: "513711846439",
-
-  appId: "1:513711846439:web:3f790b645fee7bbc33ca02"
-
-
+  apiKey: "AIzaSyBj4e1POhCY1mguLIYzrEmKrHuCiFyrYKM",
+  authDomain: "project6-dealineracers.firebaseapp.com",
+  projectId: "project6-dealineracers",
+  storageBucket: "project6-dealineracers.appspot.com",
+  messagingSenderId: "545739124501",
+  appId: "1:545739124501:web:af734f9e3d045ecc3d031c"
 };
 
 
 // Initialize Firebase
-
 export const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
 
 const vuetify = createVuetify({
   icons: {

@@ -1,77 +1,96 @@
 <template>
-  <v-card>
-    <v-img :src="product.data.image" aspect-ratio="1.7"></v-img>
+  <v-card d-flex class="pa-3" min-height="500px">
+    <!-- Product Details -->
     <v-card-title>{{ product.data.name }}</v-card-title>
-    <v-card-subtitle>{{ product.data.category }}</v-card-subtitle>
+    <v-img class="mt-4" :src="product.data.image" min-width="200px" height="200px"></v-img>
+    <v-card-subtitle >
+      <v-rating v-model="product.data.rating" color="orange" size="20" class="ma-1"/>
+      <v-icon icon="mdi-cash" size="20" color="green" class="ml-5 mb-1"/>
+      {{ product.data.price }}
+      <v-icon icon="mdi-package-variant-closed" size="20" color="blue" class="ml-5 mb-1"/>
+      {{ product.data.stock }}
+    </v-card-subtitle>
     <v-card-text>{{ product.data.description }}</v-card-text>
-    <v-card-subtitle>{{ product.data.rating }}</v-card-subtitle>
-    <v-card-text>{{ product.data.price }}</v-card-text>
-    
-    <v-card-text>{{ product.data.stock }}</v-card-text>
-    <v-card-actions>
-      <div v-if="isEditing">
-        <v-btn color="secondary" @click="updateProduct">Update</v-btn>
-        <v-btn color="secondary" @click="cancelEdit">Cancel</v-btn>
-      </div>
-      <div v-else>
-        <v-btn color="secondary" @click="modifyProduct">Modify Product</v-btn>
-      </div>
-      <v-btn color="error" @click="deleteProduct">Delete Product</v-btn>
-    </v-card-actions>
+    <v-row d-flex justify="center" align="center" class="gc-5 pt-5">
+      <v-btn color="secondary" variant="tonal" text="Edit" @click="isUpdating = true"></v-btn>
+      <v-btn variant="tonal" color="error" @click="deleteProduct(product)">Delete</v-btn>
+    </v-row>
+
+    <!-- Update Dialog -->
+    <v-dialog v-model="isUpdating" max-width="500" max-height="500px" class="pa-4">
+      <v-card class="pa-6">
+        <v-text-field v-model="product.data.name" label="Name"></v-text-field>
+        <v-text-field v-model="product.data.image" label="Image URL"></v-text-field>
+        <v-text-field v-model="product.data.description" label="Description"></v-text-field>
+        <v-row>
+          <v-col>
+            <v-text-field v-model="product.data.price" label="Price $"/>
+          </v-col>
+          <v-col>
+            <v-text-field v-model="product.data.stock" label="Stock"/>
+          </v-col>
+        </v-row>
+        <v-slider label="Rating" thumb-label="always" v-model="product.data.rating" min="0" max="5" step=".5"></v-slider>     
+        <v-row>
+          <v-col>
+            <v-btn color="secondary" variant="tonal" class="mt-2" block @click="updateProduct">Update</v-btn>
+          </v-col>
+          <v-col>
+            <v-btn color="error" variant="tonal" class="mt-2" block @click="cancelUpdate">Cancel</v-btn>
+          </v-col>
+        </v-row>         
+      </v-card>
+    </v-dialog>
+
   </v-card>
 </template>
 
 <script lang="ts" setup>
-import { ref,  defineProps, toRefs } from 'vue';
+import { ref, defineProps, watch } from 'vue';
 import { ProductDoc } from '../types/product';
-import { useProductStore } from '../stores/ProductStore';
+import { db } from "../main";
+import { doc, updateDoc } from "firebase/firestore";
 
-const props = defineProps({
-  product: {
-    type: Object as () => ProductDoc,
-    default: () => ({}),
-  },
-});
+const { product } = defineProps<{ product: ProductDoc }>();
+const isUpdating = ref(false);
+let tempProductData: ProductDoc | null = null; // Temporary copy of product data
 
-const productStore = useProductStore();
-const { product } = toRefs(props);
-const isEditing = ref(false);
-const updatedProduct = ref({...product.value});
+// Function to create a temporary copy of product data
+const createTempProductData = () => {
+  tempProductData = JSON.parse(JSON.stringify(product)); // Deep clone the product data
+};
 
-const deleteProduct = async () => {
-  if (window.confirm('Are you sure you want to delete this product?')) {
-    await productStore.deleteProduct(product.value.id);
+// Update Product
+const updateProduct = async () => {
+  const prodDocRef = doc(db, 'products', product.id);
+  try {
+    await updateDoc(prodDocRef, {
+      name: product.data.name,
+      image: product.data.image,
+      description: product.data.description,
+      price: product.data.price,
+      stock: product.data.stock,
+      rating: product.data.rating
+    });
+    isUpdating.value = false; // Close the dialog after updating
+  } catch (err) {
+    console.error("Failed updating product: ", err);
   }
 };
 
-const updateProduct = async () => {
-  if (window.confirm('Are you sure you want to save these changes?')){
-    await productStore.updateProduct(product.value.id, updatedProduct.value);
-    isEditing.value = false;
-  };
+// Cancel Update
+const cancelUpdate = () => {
+  if (tempProductData) {
+    // Restore the original product data
+    Object.assign(product.data, tempProductData.data);
+  }
+  isUpdating.value = false; // Close the dialog
 };
 
-
-const modifyProduct = async () => {
-  isEditing.value = true;
-  updatedProduct.value = {
-    id: product.value.id,
-    data: {
-      name: window.prompt('Enter new product name', product.value.data.name) || product.value.data.name,
-      description: window.prompt('Enter new product description', product.value.data.description) || product.value.data.description,
-      price: parseFloat(window.prompt('Enter new product price', product.value.data.price.toString()) || product.value.data.price.toString()),
-      rating: parseFloat(window.prompt('Enter new product rating', product.value.data.rating.toString()) || product.value.data.rating.toString()),
-      stock: parseInt(window.prompt('Enter new product stock', product.value.data.stock.toString()) || product.value.data.stock.toString()),
-      image: window.prompt('Enter new product image URL', product.value.data.image) || product.value.data.image,
-      category: window.prompt('Enter new product category', product.value.data.category) || product.value.data.category,
-    }
-  };
-
-  await productStore.updateProduct(product.value.id, updatedProduct.value);
-};
-
-const cancelEdit = () => {
-  isEditing.value = false;
-};
-
+// Watch for changes in the isUpdating flag and create a temporary copy of product data when it becomes true
+watch(isUpdating, (newValue) => {
+  if (newValue) {
+    createTempProductData();
+  }
+});
 </script>

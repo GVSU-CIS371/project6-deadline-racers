@@ -7,7 +7,7 @@
         {{ link.text }}
       </v-btn>
     </v-app-bar>
-    <v-main class="bg-blue-lighten-5">
+    <v-main class="bg-blue-lighten-5 ">
       <router-view v-slot="{ Component }">
         <transition name="shrink-explode">
           <component :is="Component" />
@@ -30,5 +30,6 @@ const links = ref([
   { text: "Clothing", to: "/clothing", icon: "mdi-tshirt-crew" },
   { text: "Groceries", to: "/groceries", icon: "mdi-cart" },
   { text: "Best Seller", to: "/bestseller", icon: "mdi-cash-register" },
+  { text: "Add Product", icon:"mdi-plus"}
 ]);
 </script>
