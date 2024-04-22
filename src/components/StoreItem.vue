@@ -49,7 +49,7 @@
 import { ref, defineProps, watch } from 'vue';
 import { ProductDoc } from '../types/product';
 import { db } from "../main";
-import { doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 
 const { product } = defineProps<{ product: ProductDoc }>();
 const isUpdating = ref(false);
@@ -85,6 +85,19 @@ const cancelUpdate = () => {
     Object.assign(product.data, tempProductData.data);
   }
   isUpdating.value = false; // Close the dialog
+};
+
+// Delete Product
+const deleteProduct = async (prod: ProductDoc) => {
+  const prodDocRef = doc(db, 'products', prod.id)
+  try {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      await deleteDoc(prodDocRef);
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error("Failed deleting product: ", err)
+  }
 };
 
 // Watch for changes in the isUpdating flag and create a temporary copy of product data when it becomes true
